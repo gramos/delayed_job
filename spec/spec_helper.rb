@@ -20,8 +20,9 @@ Dir.glob("#{File.dirname(__FILE__)}/setup/*.rb") do |backend|
     require "setup/#{backend}"
     require "backend/#{backend}_job_spec"
     BACKENDS << backend.to_sym
-  rescue LoadError
-    puts "Unable to load #{backend} backend: #{$!}"
+  rescue Exception => e
+    puts "Unable to load #{backend} backend: #{e}"
+    Delayed::Worker.logger.error "#{e} #{e.backtrace.join("\n")}"
   end
 end
 
