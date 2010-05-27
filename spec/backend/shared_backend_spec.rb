@@ -14,7 +14,7 @@ shared_examples_for 'a backend' do
     Delayed::Worker.min_priority = nil
     SimpleJob.runs = 0
   end
-  
+
   it "should set run_at automatically if not set" do
     @backend.create(:payload_object => ErrorJob.new ).run_at.should_not be_nil
   end
@@ -32,7 +32,7 @@ shared_examples_for 'a backend' do
     @backend.enqueue SimpleJob.new
     @backend.count.should == 1
   end
-  
+
   it "should be able to set priority when enqueuing items" do
     @job = @backend.enqueue SimpleJob.new, 5
     @job.priority.should == 5
@@ -49,7 +49,7 @@ shared_examples_for 'a backend' do
     job = @backend.enqueue M::ModuleJob.new
     lambda { job.invoke_job }.should change { M::ModuleJob.runs }.from(0).to(1)
   end
-  
+
   describe "payload_object" do
     it "should raise a DeserializationError when the job class is totally unknown" do
       job = @backend.new :handler => "--- !ruby/object:JobThatDoesNotExist {}"
@@ -60,7 +60,7 @@ shared_examples_for 'a backend' do
       job = @backend.new :handler => "--- !ruby/struct:StructThatDoesNotExist {}"
       lambda { job.payload_object }.should raise_error(Delayed::Backend::DeserializationError)
     end
-    
+
     it "should autoload classes that are unknown at runtime" do
       job = @backend.new :handler => "--- !ruby/object:Autoloaded::Clazz {}"
       lambda { job.payload_object }.should_not raise_error(Delayed::Backend::DeserializationError)
@@ -71,33 +71,33 @@ shared_examples_for 'a backend' do
       lambda { job.payload_object }.should_not raise_error(Delayed::Backend::DeserializationError)
     end
   end
-  
+
   describe "find_available" do
     it "should not find failed jobs" do
       @job = create_job :attempts => 50, :failed_at => @backend.db_time_now
       @backend.find_available('worker', 5, 1.second).should_not include(@job)
     end
-    
+
     it "should not find jobs scheduled for the future" do
       @job = create_job :run_at => (@backend.db_time_now + 1.minute)
       @backend.find_available('worker', 5, 4.hours).should_not include(@job)
     end
-    
+
     it "should not find jobs locked by another worker" do
       @job = create_job(:locked_by => 'other_worker', :locked_at => @backend.db_time_now - 1.minute)
       @backend.find_available('worker', 5, 4.hours).should_not include(@job)
     end
-    
+
     it "should find open jobs" do
       @job = create_job
       @backend.find_available('worker', 5, 4.hours).should include(@job)
     end
-    
+
     it "should find expired jobs" do
       @job = create_job(:locked_by => 'worker', :locked_at => @backend.db_time_now - 2.minutes)
       @backend.find_available('worker', 5, 1.minute).should include(@job)
     end
-    
+
     it "should find own jobs" do
       @job = create_job(:locked_by => 'worker', :locked_at => (@backend.db_time_now - 1.minutes))
       @backend.find_available('worker', 5, 4.hours).should include(@job)
@@ -108,7 +108,7 @@ shared_examples_for 'a backend' do
       @backend.find_available('worker', 7, 4.hours).should have(7).jobs
     end
   end
-  
+
   context "when another worker is already performing an task, it" do
 
     before :each do
@@ -121,8 +121,8 @@ shared_examples_for 'a backend' do
 
     it "should allow a second worker to get exclusive access if the timeout has passed" do
       @job.lock_exclusively!(1.minute, 'worker2').should == true
-    end      
-    
+    end
+
     it "should be able to get access to the task if it was started more then max_age ago" do
       @job.locked_at = 5.hours.ago
       @job.save
@@ -145,9 +145,9 @@ shared_examples_for 'a backend' do
       @job.lock_exclusively!(5.minutes, 'worker1').should be_true
       @job.lock_exclusively!(5.minutes, 'worker1').should be_true
       @job.lock_exclusively!(5.minutes, 'worker1').should be_true
-    end                                        
+    end
   end
-  
+
   context "when another worker has worked on a task since the job was found to be available, it" do
 
     before :each do
@@ -170,7 +170,7 @@ shared_examples_for 'a backend' do
     it "should be the class name of the job that was enqueued" do
       @backend.create(:payload_object => ErrorJob.new ).name.should == 'ErrorJob'
     end
-    
+
     it "should be the method that will be called if its a performable method object" do
       job = @backend.new(:payload_object => NamedJob.new)
       job.name.should == 'named_job'
@@ -181,7 +181,7 @@ shared_examples_for 'a backend' do
       @job.name.should == 'Story#save'
     end
   end
-  
+
   context "worker prioritization" do
     before(:each) do
       Delayed::Worker.max_priority = nil
@@ -192,7 +192,7 @@ shared_examples_for 'a backend' do
       10.times { @backend.enqueue SimpleJob.new, rand(10) }
       jobs = @backend.find_available('worker', 10)
       jobs.size.should == 10
-      jobs.each_cons(2) do |a, b| 
+      jobs.each_cons(2) do |a, b|
         a.priority.should <= b.priority
       end
     end
@@ -213,23 +213,23 @@ shared_examples_for 'a backend' do
       jobs.each {|job| job.priority.should <= max}
     end
   end
-  
+
   context "clear_locks!" do
     before do
       @job = create_job(:locked_by => 'worker', :locked_at => @backend.db_time_now)
     end
-    
+
     it "should clear locks for the given worker" do
       @backend.clear_locks!('worker')
       @backend.find_available('worker2', 5, 1.minute).should include(@job)
     end
-    
+
     it "should not clear locks for other workers" do
       @backend.clear_locks!('worker1')
       @backend.find_available('worker1', 5, 1.minute).should_not include(@job)
     end
   end
-  
+
   context "unlock" do
     before do
       @job = create_job(:locked_by => 'worker', :locked_at => @backend.db_time_now)
@@ -241,13 +241,13 @@ shared_examples_for 'a backend' do
       @job.locked_at.should be_nil
     end
   end
-  
+
   context "large handler" do
     before do
       text = "Lorem ipsum dolor sit amet. " * 1000
       @job = @backend.enqueue Delayed::PerformableMethod.new(text, :length, {})
     end
-    
+
     it "should have an id" do
       @job.id.should_not be_nil
     end
