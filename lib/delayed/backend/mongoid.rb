@@ -47,30 +47,28 @@ module Delayed
           Time.now.utc
         end
 
-        # def self.find_available(worker_name, limit = 5, max_run_time = Worker.max_run_time)
-        #   right_now = db_time_now
+        def self.find_available(worker_name, limit = 5, max_run_time = Worker.max_run_time)
+          right_now = db_time_now
 
-        #   conditions = {
-        #     :run_at => {"$lte" => right_now},
-        #     :limit => -limit, # In mongo, positive limits are 'soft' and negative are 'hard'
-        #     :failed_at => nil,
-        #     :sort => [['priority', 1], ['run_at', 1]]
-        #   }
+          conditions = {
+            :run_at.lte => right_now,
+            :limit => -limit, # In mongo, positive limits are 'soft' and negative are 'hard'
+            :failed_at => nil }
 
-        #   where = "this.locked_at == null || this.locked_at < #{make_date(right_now - max_run_time)}"
+          results = criteria
+          results = criteria.where(conditions.merge(:locked_by => worker_name))
 
-        #   (conditions[:priority] ||= {})['$gte'] = Worker.min_priority.to_i if Worker.min_priority
-        #   (conditions[:priority] ||= {})['$lte'] = Worker.max_priority.to_i if Worker.max_priority
+          results.where(:priority.gte =>  Worker.min_priority.to_i) if Worker.min_priority
+          results.where(:priority.lte =>  Worker.max_priority.to_i) if Worker.max_priority
 
-        #   results = all(conditions.merge(:locked_by => worker_name))
-        #   results += all(conditions.merge('$where' => where)) if results.size < limit
-        #   results
-        # end
+          results.in( :locked_at => [nil, make_date(right_now - max_run_time)] )  if results.size < limit
+          results.order_by([[:priority, :asc], [:run_at, :asc]]).all
+        end
 
-        # # When a worker is exiting, make sure we don't have any locked jobs.
-        # def self.clear_locks!(worker_name)
-        #   collection.update({:locked_by => worker_name}, {"$set" => {:locked_at => nil, :locked_by => nil}}, :multi => true)
-        # end
+        # When a worker is exiting, make sure we don't have any locked jobs.
+        def self.clear_locks!(worker_name)
+          collection.update({:locked_by => worker_name}, {"$set" => {:locked_at => nil, :locked_by => nil}}, :multi => true)
+        end
 
         # # Lock this job for this worker.
         # # Returns true if we have the lock, false otherwise.
