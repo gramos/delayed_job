@@ -2,13 +2,13 @@ require 'spec_helper'
 require 'backend/shared_backend_spec'
 require 'delayed/backend/mongoid'
 
-describe Delayed::Backend::MongoMapper::Job do
+describe Delayed::Backend::Mongoid::Job do
   before(:all) do
     @backend = Delayed::Backend::Mongoid::Job
   end
 
   before(:each) do
-    # MongoMapper.database.collections.each(&:remove)
+    Mongoid.database.collections.each(&:remove)
   end
 
   it_should_behave_like 'a backend'

@@ -1,7 +1,7 @@
 require 'mongoid'
 
 Mongoid::Document.class_eval do
-  yaml_as "tag:ruby.yaml.org,2002:MongoMapper"
+  yaml_as "tag:ruby.yaml.org,2002:Mongoid"
 
   def self.yaml_new(klass, tag, val)
     klass.find(val['_id'])
@@ -33,7 +33,7 @@ module Delayed
 
         before_save :set_default_run_at
 
-        ensure_index [[:priority, 1], [:run_at, 1]]
+        # ensure_index [[:priority, 1], [:run_at, 1]]
 
         def self.before_fork
           ::Mongoid.configure.master.connection.close
