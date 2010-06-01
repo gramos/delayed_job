@@ -47,6 +47,20 @@ module Delayed
           Time.now.utc
         end
 
+        def ready_to_run(worker_name, max_run_time)
+
+          r = criteria.where({ :run_at => { "$lte" => db_time_now }, :locked_at => nil,
+                           :failed_at => nil})
+
+          criteria.where({ :run_at => { "$lte" => db_time_now },
+                           :locked_at => { "$lte" => db_time_now - max_run_time },
+                           :failed_at => nil} ).all.to_a +
+
+          criteria.where({ :run_at => { "$lte" => db_time_now },
+                           :locked_by => worker_name,  :failed_at => nil} ).all.to_a
+
+        end
+
         def self.find_available(worker_name, limit = 5, max_run_time = Worker.max_run_time)
           right_now = db_time_now
 
@@ -55,7 +69,8 @@ module Delayed
             :limit => -limit, # In mongo, positive limits are 'soft' and negative are 'hard'
             :failed_at => nil }
 
-          results = criteria.where(conditions.merge(:locked_by => worker_name))
+          #results = criteria.where(conditions.merge(:locked_by => worker_name))
+          results = criteria
 
           results.where(:priority.gte =>  Worker.min_priority.to_i) if Worker.min_priority
           results.where(:priority.lte =>  Worker.max_priority.to_i) if Worker.max_priority
@@ -67,7 +82,9 @@ module Delayed
 
         # When a worker is exiting, make sure we don't have any locked jobs.
         def self.clear_locks!(worker_name)
-          collection.update({:locked_by => worker_name}, {"$set" => {:locked_at => nil, :locked_by => nil}}, :multi => true)
+          collection.update({:locked_by => worker_name},
+                            {"$set" => {:locked_at => nil, :locked_by => nil}},
+                            :multi => true)
         end
 
         # Lock this job for this worker.

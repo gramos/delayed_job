@@ -1,16 +1,15 @@
 require 'spec_helper'
-require 'backend/shared_backend_spec'
-require 'delayed/backend/mongo_mapper'
+load_backend(:mongo_mapper)
 
 describe Delayed::Backend::MongoMapper::Job do
   before(:all) do
     @backend = Delayed::Backend::MongoMapper::Job
   end
-  
+
   before(:each) do
     MongoMapper.database.collections.each(&:remove)
   end
-  
+
   it_should_behave_like 'a backend'
 
   describe "indexes" do
@@ -22,23 +21,23 @@ describe Delayed::Backend::MongoMapper::Job do
       @backend.collection.index_information.detect { |index| index[0] == 'locked_by_1' }.should_not be_nil
     end
   end
-  
+
   describe "delayed method" do
     class MongoStoryReader
       def read(story)
         "Epilog: #{story.tell}"
       end
     end
-    
+
     class MongoStory
       include ::MongoMapper::Document
       key :text, String
-      
+
       def tell
         text
       end
     end
-    
+
     it "should ignore not found errors because they are permanent" do
       story = MongoStory.create :text => 'Once upon a time...'
       job = story.delay.tell
@@ -66,12 +65,12 @@ describe Delayed::Backend::MongoMapper::Job do
       job.payload_object.perform.should == 'Epilog: Once upon a time...'
     end
   end
-  
+
   describe "before_fork" do
     after do
       MongoMapper.connection.connect_to_master
     end
-    
+
     it "should disconnect" do
       lambda do
         Delayed::Backend::MongoMapper::Job.before_fork
@@ -83,12 +82,12 @@ describe Delayed::Backend::MongoMapper::Job do
     before do
       MongoMapper.connection.close
     end
-    
+
     it "should call reconnect" do
       lambda do
         Delayed::Backend::MongoMapper::Job.after_fork
       end.should change { !!MongoMapper.connection.connected? }.from(false).to(true)
     end
   end
-  
+
 end

@@ -13,13 +13,13 @@ Jeweler::Tasks.new do |s|
   s.homepage = "http://github.com/collectiveidea/delayed_job"
   s.description = "Delayed_job (or DJ) encapsulates the common pattern of asynchronously executing longer tasks in the background. It is a direct extraction from Shopify where the job table is responsible for a multitude of core tasks.\n\nThis gem is collectiveidea's fork (http://github.com/collectiveidea/delayed_job)."
   s.authors  = ["Brandon Keepers", "Tobias Lütke"]
-  
+
   s.has_rdoc = true
   s.rdoc_options = ["--main", "README.textile", "--inline-source", "--line-numbers"]
   s.extra_rdoc_files = ["README.textile"]
-  
+
   s.test_files = Dir['spec/*_spec.rb']
-  
+
   s.add_dependency "daemons"
   s.add_development_dependency "rspec"
   s.add_development_dependency "sqlite3-ruby"
@@ -35,7 +35,6 @@ end
 
 require 'spec/rake/spectask'
 
-
 task :default do
   %w(2.3.5 3.0.0.beta3).each do |version|
     puts "Running specs with Rails #{version}"
@@ -49,5 +48,20 @@ Spec::Rake::SpecTask.new(:spec) do |t|
   t.pattern = 'spec/*_spec.rb'
   t.verbose = true
 end
-task :spec => :check_dependencies
+
+task :load_backends do
+  require "#{File.dirname(__FILE__)}/spec/spec_helper"
+
+  backend_files = Dir.glob("#{File.dirname(__FILE__)}/spec/setup/*.rb")
+
+  backend_files.each do |backend|
+    backend = File.basename(backend, '.rb').to_sym
+    puts "--> Loading #{backend} backend..."
+    load_backend(backend)
+  end
+end
+
+task :spec => [:check_dependencies, :load_backends]
+
+
 

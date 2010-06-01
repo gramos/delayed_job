@@ -1,4 +1,5 @@
 $:.unshift(File.dirname(__FILE__) + '/../lib')
+$: << File.dirname(__FILE__)
 
 require 'rubygems'
 require 'spec'
@@ -6,27 +7,32 @@ require 'logger'
 
 gem 'activerecord', ENV['RAILS_VERSION'] if ENV['RAILS_VERSION']
 
+#require 'active_support/dependencies'
+#ActiveSupport::Dependencies.load_paths << File.dirname(__FILE__)
+
 require 'delayed_job'
 require 'sample_jobs'
 
 Delayed::Worker.logger = Logger.new('/tmp/dj.log')
 RAILS_ENV = 'test'
 
-# determine the available backends
-BACKENDS = []
-Dir.glob("#{File.dirname(__FILE__)}/setup/*.rb") do |backend|
+
+BACKENDS ||= []
+
+def load_backend(backend, output = false)
+  require 'backend/shared_backend_spec'
+
   begin
-    backend = File.basename(backend, '.rb')
     require "setup/#{backend}"
-    require "backend/#{backend}_job_spec"
-    BACKENDS << backend.to_sym
-  rescue Exception => e
+    require "delayed/backend/#{backend}"
+    Delayed::Worker.backend = backend
+    BACKENDS << backend
+  rescue => e
     puts "Unable to load #{backend} backend: #{e}"
     Delayed::Worker.logger.error "#{e} #{e.backtrace.join("\n")}"
   end
+
 end
 
-Delayed::Worker.backend = BACKENDS.first
 
-# Add this directory so the ActiveSupport autoloading works
-ActiveSupport::Dependencies.load_paths << File.dirname(__FILE__)
+

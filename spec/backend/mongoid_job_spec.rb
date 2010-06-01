@@ -1,6 +1,5 @@
 require 'spec_helper'
-require 'backend/shared_backend_spec'
-require 'delayed/backend/mongoid'
+load_backend(:mongoid)
 
 describe Delayed::Backend::Mongoid::Job do
   before(:all) do
