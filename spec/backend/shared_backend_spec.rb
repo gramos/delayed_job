@@ -109,44 +109,46 @@ shared_examples_for 'a backend' do
     end
    end
 
-  # context "when another worker is already performing an task, it" do
+  context "when another worker is already performing an task, it" do
 
-  #   before :each do
-  #     @job = @backend.create :payload_object => SimpleJob.new, :locked_by => 'worker1', :locked_at => @backend.db_time_now - 5.minutes
-  #   end
+    before :each do
+      @job = @backend.create :payload_object => SimpleJob.new,
+             :locked_by => 'worker1',
+             :locked_at => @backend.db_time_now - 5.minutes
+    end
 
-  #   it "should not allow a second worker to get exclusive access" do
-  #     @job.lock_exclusively!(4.hours, 'worker2').should == false
-  #   end
+    it "should not allow a second worker to get exclusive access" do
+      @job.lock_exclusively!(4.hours, 'worker2').should == false
+    end
 
-  #   it "should allow a second worker to get exclusive access if the timeout has passed" do
-  #     @job.lock_exclusively!(1.minute, 'worker2').should == true
-  #   end
+    it "should allow a second worker to get exclusive access if the timeout has passed" do
+      @job.lock_exclusively!(1.minute, 'worker2').should == true
+    end
 
-  #   it "should be able to get access to the task if it was started more then max_age ago" do
-  #     @job.locked_at = 5.hours.ago
-  #     @job.save
+    it "should be able to get access to the task if it was started more then max_age ago" do
+      @job.locked_at = 5.hours.ago
+      @job.save
 
-  #     @job.lock_exclusively! 4.hours, 'worker2'
-  #     @job.reload
-  #     @job.locked_by.should == 'worker2'
-  #     @job.locked_at.should > 1.minute.ago
-  #   end
+      @job.lock_exclusively! 4.hours, 'worker2'
+      @job.reload
+      @job.locked_by.should == 'worker2'
+      @job.locked_at.should > 1.minute.ago
+    end
 
-  #   it "should not be found by another worker" do
-  #     @backend.find_available('worker2', 1, 6.minutes).length.should == 0
-  #   end
+    it "should not be found by another worker" do
+      @backend.find_available('worker2', 1, 6.minutes).length.should == 0
+    end
 
-  #   it "should be found by another worker if the time has expired" do
-  #     @backend.find_available('worker2', 1, 4.minutes).length.should == 1
-  #   end
+    it "should be found by another worker if the time has expired" do
+      @backend.find_available('worker2', 1, 4.minutes).length.should == 1
+    end
 
-  #   it "should be able to get exclusive access again when the worker name is the same" do
-  #     @job.lock_exclusively!(5.minutes, 'worker1').should be_true
-  #     @job.lock_exclusively!(5.minutes, 'worker1').should be_true
-  #     @job.lock_exclusively!(5.minutes, 'worker1').should be_true
-  #   end
-  # end
+    it "should be able to get exclusive access again when the worker name is the same" do
+      @job.lock_exclusively!(5.minutes, 'worker1').should be_true
+      @job.lock_exclusively!(5.minutes, 'worker1').should be_true
+      @job.lock_exclusively!(5.minutes, 'worker1').should be_true
+    end
+  end
 
   # context "when another worker has worked on a task since the job was found to be available, it" do
 
