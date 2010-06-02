@@ -150,23 +150,23 @@ shared_examples_for 'a backend' do
     end
   end
 
-  # context "when another worker has worked on a task since the job was found to be available, it" do
+  context "when another worker has worked on a task since the job was found to be available, it" do
 
-  #   before :each do
-  #     @job = @backend.create :payload_object => SimpleJob.new
-  #     @job_copy_for_worker_2 = @backend.find(@job.id)
-  #   end
+    before :each do
+      @job = @backend.create :payload_object => SimpleJob.new
+      @job_copy_for_worker_2 = @backend.find(@job.id)
+    end
 
-  #   it "should not allow a second worker to get exclusive access if already successfully processed by worker1" do
-  #     @job.destroy
-  #     @job_copy_for_worker_2.lock_exclusively!(4.hours, 'worker2').should == false
-  #   end
+    it "should not allow a second worker to get exclusive access if already successfully processed by worker1" do
+      @job.destroy
+      @job_copy_for_worker_2.lock_exclusively!(4.hours, 'worker2').should == false
+    end
 
-  #   it "should not allow a second worker to get exclusive access if failed to be processed by worker1 and run_at time is now in future (due to backing off behaviour)" do
-  #     @job.update_attributes(:attempts => 1, :run_at => 1.day.from_now)
-  #     @job_copy_for_worker_2.lock_exclusively!(4.hours, 'worker2').should == false
-  #   end
-  # end
+    it "should not allow a second worker to get exclusive access if failed to be processed by worker1 and run_at time is now in future (due to backing off behaviour)" do
+      @job.update_attributes(:attempts => 1, :run_at => 1.day.from_now)
+      @job_copy_for_worker_2.lock_exclusively!(4.hours, 'worker2').should == false
+    end
+  end
 
   # context "#name" do
   #   it "should be the class name of the job that was enqueued" do
