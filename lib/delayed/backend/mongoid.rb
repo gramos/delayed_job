@@ -47,21 +47,22 @@ module Delayed
           Time.now.utc
         end
 
-        def self.ready_to_run(worker_name, max_run_time)
+        def self.ready_to_run(worker_name, max_run_time, limit = 5)
           r = criteria.where({ :run_at => { "$lte" => db_time_now }, :locked_at => nil,
-                           :failed_at => nil}).all.to_a +
+                           :failed_at => nil}).limit(limit).all +
 
           criteria.where({ :run_at => { "$lte" => db_time_now },
                            :locked_at => { "$lte" => db_time_now - max_run_time },
-                           :failed_at => nil} ).all.to_a +
+                           :failed_at => nil} ).limit(limit).all +
 
           criteria.where({ :run_at => { "$lte" => db_time_now },
-                           :locked_by => worker_name,  :failed_at => nil} ).all.to_a
+                           :locked_by => worker_name,  :failed_at => nil} ).limit(limit).all
 
+          r[0..limit - 1]
         end
 
         def self.find_available(worker_name, limit = 5, max_run_time = Worker.max_run_time)
-          ready_to_run(worker_name, max_run_time)
+          ready_to_run(worker_name, max_run_time, limit)
         end
 
         # When a worker is exiting, make sure we don't have any locked jobs.

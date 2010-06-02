@@ -98,15 +98,15 @@ shared_examples_for 'a backend' do
       @backend.find_available('worker', 5, 1.minute).should include(@job)
     end
 
-  #   it "should find own jobs" do
-  #     @job = create_job(:locked_by => 'worker', :locked_at => (@backend.db_time_now - 1.minutes))
-  #     @backend.find_available('worker', 5, 4.hours).should include(@job)
-  #   end
+    it "should find own jobs" do
+      @job = create_job(:locked_by => 'worker', :locked_at => (@backend.db_time_now - 1.minutes))
+      @backend.find_available('worker', 5, 4.hours).should include(@job)
+    end
 
-  #   it "should find only the right amount of jobs" do
-  #     10.times { create_job }
-  #     @backend.find_available('worker', 7, 4.hours).should have(7).jobs
-  #   end
+    it "should find only the right amount of jobs" do
+      10.times { create_job }
+      @backend.find_available('worker', 7, 4.hours).should have(7).jobs
+    end
    end
 
   # context "when another worker is already performing an task, it" do
