@@ -24,7 +24,8 @@ Jeweler::Tasks.new do |s|
   s.add_development_dependency "rspec"
   s.add_development_dependency "sqlite3-ruby"
   s.add_development_dependency "activerecord"
-  s.add_development_dependency "mongo_mapper"
+  #  s.add_development_dependency "mongo_mapper"
+  # s.add_development_dependency "mongoid"
   s.add_development_dependency "dm-core"
   s.add_development_dependency "dm-observer"
   s.add_development_dependency "dm-aggregates"
@@ -54,10 +55,11 @@ task :load_backends do
 
   backend_files = Dir.glob("#{File.dirname(__FILE__)}/spec/setup/*.rb")
 
+  REMOVED_BACKENDS = [:mongo_mapper]
+
   backend_files.each do |backend|
     backend = File.basename(backend, '.rb').to_sym
-    puts "--> Loading #{backend} backend..."
-    load_backend(backend)
+    load_backend(backend) unless REMOVED_BACKENDS.include? backend
   end
 end
 

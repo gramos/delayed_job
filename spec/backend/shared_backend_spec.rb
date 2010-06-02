@@ -93,181 +93,181 @@ shared_examples_for 'a backend' do
       @backend.find_available('worker', 5, 4.hours).should include(@job)
     end
 
-    it "should find expired jobs" do
-      @job = create_job(:locked_by => 'worker', :locked_at => @backend.db_time_now - 2.minutes)
-      @backend.find_available('worker', 5, 1.minute).should include(@job)
-    end
+  #   it "should find expired jobs" do
+  #     @job = create_job(:locked_by => 'worker', :locked_at => @backend.db_time_now - 2.minutes)
+  #     @backend.find_available('worker', 5, 1.minute).should include(@job)
+  #   end
 
-    it "should find own jobs" do
-      @job = create_job(:locked_by => 'worker', :locked_at => (@backend.db_time_now - 1.minutes))
-      @backend.find_available('worker', 5, 4.hours).should include(@job)
-    end
+  #   it "should find own jobs" do
+  #     @job = create_job(:locked_by => 'worker', :locked_at => (@backend.db_time_now - 1.minutes))
+  #     @backend.find_available('worker', 5, 4.hours).should include(@job)
+  #   end
 
-    it "should find only the right amount of jobs" do
-      10.times { create_job }
-      @backend.find_available('worker', 7, 4.hours).should have(7).jobs
-    end
-  end
+  #   it "should find only the right amount of jobs" do
+  #     10.times { create_job }
+  #     @backend.find_available('worker', 7, 4.hours).should have(7).jobs
+  #   end
+   end
 
-  context "when another worker is already performing an task, it" do
+  # context "when another worker is already performing an task, it" do
 
-    before :each do
-      @job = @backend.create :payload_object => SimpleJob.new, :locked_by => 'worker1', :locked_at => @backend.db_time_now - 5.minutes
-    end
+  #   before :each do
+  #     @job = @backend.create :payload_object => SimpleJob.new, :locked_by => 'worker1', :locked_at => @backend.db_time_now - 5.minutes
+  #   end
 
-    it "should not allow a second worker to get exclusive access" do
-      @job.lock_exclusively!(4.hours, 'worker2').should == false
-    end
+  #   it "should not allow a second worker to get exclusive access" do
+  #     @job.lock_exclusively!(4.hours, 'worker2').should == false
+  #   end
 
-    it "should allow a second worker to get exclusive access if the timeout has passed" do
-      @job.lock_exclusively!(1.minute, 'worker2').should == true
-    end
+  #   it "should allow a second worker to get exclusive access if the timeout has passed" do
+  #     @job.lock_exclusively!(1.minute, 'worker2').should == true
+  #   end
 
-    it "should be able to get access to the task if it was started more then max_age ago" do
-      @job.locked_at = 5.hours.ago
-      @job.save
+  #   it "should be able to get access to the task if it was started more then max_age ago" do
+  #     @job.locked_at = 5.hours.ago
+  #     @job.save
 
-      @job.lock_exclusively! 4.hours, 'worker2'
-      @job.reload
-      @job.locked_by.should == 'worker2'
-      @job.locked_at.should > 1.minute.ago
-    end
+  #     @job.lock_exclusively! 4.hours, 'worker2'
+  #     @job.reload
+  #     @job.locked_by.should == 'worker2'
+  #     @job.locked_at.should > 1.minute.ago
+  #   end
 
-    it "should not be found by another worker" do
-      @backend.find_available('worker2', 1, 6.minutes).length.should == 0
-    end
+  #   it "should not be found by another worker" do
+  #     @backend.find_available('worker2', 1, 6.minutes).length.should == 0
+  #   end
 
-    it "should be found by another worker if the time has expired" do
-      @backend.find_available('worker2', 1, 4.minutes).length.should == 1
-    end
+  #   it "should be found by another worker if the time has expired" do
+  #     @backend.find_available('worker2', 1, 4.minutes).length.should == 1
+  #   end
 
-    it "should be able to get exclusive access again when the worker name is the same" do
-      @job.lock_exclusively!(5.minutes, 'worker1').should be_true
-      @job.lock_exclusively!(5.minutes, 'worker1').should be_true
-      @job.lock_exclusively!(5.minutes, 'worker1').should be_true
-    end
-  end
+  #   it "should be able to get exclusive access again when the worker name is the same" do
+  #     @job.lock_exclusively!(5.minutes, 'worker1').should be_true
+  #     @job.lock_exclusively!(5.minutes, 'worker1').should be_true
+  #     @job.lock_exclusively!(5.minutes, 'worker1').should be_true
+  #   end
+  # end
 
-  context "when another worker has worked on a task since the job was found to be available, it" do
+  # context "when another worker has worked on a task since the job was found to be available, it" do
 
-    before :each do
-      @job = @backend.create :payload_object => SimpleJob.new
-      @job_copy_for_worker_2 = @backend.find(@job.id)
-    end
+  #   before :each do
+  #     @job = @backend.create :payload_object => SimpleJob.new
+  #     @job_copy_for_worker_2 = @backend.find(@job.id)
+  #   end
 
-    it "should not allow a second worker to get exclusive access if already successfully processed by worker1" do
-      @job.destroy
-      @job_copy_for_worker_2.lock_exclusively!(4.hours, 'worker2').should == false
-    end
+  #   it "should not allow a second worker to get exclusive access if already successfully processed by worker1" do
+  #     @job.destroy
+  #     @job_copy_for_worker_2.lock_exclusively!(4.hours, 'worker2').should == false
+  #   end
 
-    it "should not allow a second worker to get exclusive access if failed to be processed by worker1 and run_at time is now in future (due to backing off behaviour)" do
-      @job.update_attributes(:attempts => 1, :run_at => 1.day.from_now)
-      @job_copy_for_worker_2.lock_exclusively!(4.hours, 'worker2').should == false
-    end
-  end
+  #   it "should not allow a second worker to get exclusive access if failed to be processed by worker1 and run_at time is now in future (due to backing off behaviour)" do
+  #     @job.update_attributes(:attempts => 1, :run_at => 1.day.from_now)
+  #     @job_copy_for_worker_2.lock_exclusively!(4.hours, 'worker2').should == false
+  #   end
+  # end
 
-  context "#name" do
-    it "should be the class name of the job that was enqueued" do
-      @backend.create(:payload_object => ErrorJob.new ).name.should == 'ErrorJob'
-    end
+  # context "#name" do
+  #   it "should be the class name of the job that was enqueued" do
+  #     @backend.create(:payload_object => ErrorJob.new ).name.should == 'ErrorJob'
+  #   end
 
-    it "should be the method that will be called if its a performable method object" do
-      job = @backend.new(:payload_object => NamedJob.new)
-      job.name.should == 'named_job'
-    end
+  #   it "should be the method that will be called if its a performable method object" do
+  #     job = @backend.new(:payload_object => NamedJob.new)
+  #     job.name.should == 'named_job'
+  #   end
 
-    it "should be the instance method that will be called if its a performable method object" do
-      @job = Story.create(:text => "...").delay.save
-      @job.name.should == 'Story#save'
-    end
-  end
+  #   it "should be the instance method that will be called if its a performable method object" do
+  #     @job = Story.create(:text => "...").delay.save
+  #     @job.name.should == 'Story#save'
+  #   end
+  # end
 
-  context "worker prioritization" do
-    before(:each) do
-      Delayed::Worker.max_priority = nil
-      Delayed::Worker.min_priority = nil
-    end
+  # context "worker prioritization" do
+  #   before(:each) do
+  #     Delayed::Worker.max_priority = nil
+  #     Delayed::Worker.min_priority = nil
+  #   end
 
-    it "should fetch jobs ordered by priority" do
-      10.times { @backend.enqueue SimpleJob.new, rand(10) }
-      jobs = @backend.find_available('worker', 10)
-      jobs.size.should == 10
-      jobs.each_cons(2) do |a, b|
-        a.priority.should <= b.priority
-      end
-    end
+  #   it "should fetch jobs ordered by priority" do
+  #     10.times { @backend.enqueue SimpleJob.new, rand(10) }
+  #     jobs = @backend.find_available('worker', 10)
+  #     jobs.size.should == 10
+  #     jobs.each_cons(2) do |a, b|
+  #       a.priority.should <= b.priority
+  #     end
+  #   end
 
-    it "should only find jobs greater than or equal to min priority" do
-      min = 5
-      Delayed::Worker.min_priority = min
-      10.times {|i| @backend.enqueue SimpleJob.new, i }
-      jobs = @backend.find_available('worker', 10)
-      jobs.each {|job| job.priority.should >= min}
-    end
+  #   it "should only find jobs greater than or equal to min priority" do
+  #     min = 5
+  #     Delayed::Worker.min_priority = min
+  #     10.times {|i| @backend.enqueue SimpleJob.new, i }
+  #     jobs = @backend.find_available('worker', 10)
+  #     jobs.each {|job| job.priority.should >= min}
+  #   end
 
-    it "should only find jobs less than or equal to max priority" do
-      max = 5
-      Delayed::Worker.max_priority = max
-      10.times {|i| @backend.enqueue SimpleJob.new, i }
-      jobs = @backend.find_available('worker', 10)
-      jobs.each {|job| job.priority.should <= max}
-    end
-  end
+  #   it "should only find jobs less than or equal to max priority" do
+  #     max = 5
+  #     Delayed::Worker.max_priority = max
+  #     10.times {|i| @backend.enqueue SimpleJob.new, i }
+  #     jobs = @backend.find_available('worker', 10)
+  #     jobs.each {|job| job.priority.should <= max}
+  #   end
+  # end
 
-  context "clear_locks!" do
-    before do
-      @job = create_job(:locked_by => 'worker', :locked_at => @backend.db_time_now)
-    end
+  # context "clear_locks!" do
+  #   before do
+  #     @job = create_job(:locked_by => 'worker', :locked_at => @backend.db_time_now)
+  #   end
 
-    it "should clear locks for the given worker" do
-      @backend.clear_locks!('worker')
-      @backend.find_available('worker2', 5, 1.minute).should include(@job)
-    end
+  #   it "should clear locks for the given worker" do
+  #     @backend.clear_locks!('worker')
+  #     @backend.find_available('worker2', 5, 1.minute).should include(@job)
+  #   end
 
-    it "should not clear locks for other workers" do
-      @backend.clear_locks!('worker1')
-      @backend.find_available('worker1', 5, 1.minute).should_not include(@job)
-    end
-  end
+  #   it "should not clear locks for other workers" do
+  #     @backend.clear_locks!('worker1')
+  #     @backend.find_available('worker1', 5, 1.minute).should_not include(@job)
+  #   end
+  # end
 
-  context "unlock" do
-    before do
-      @job = create_job(:locked_by => 'worker', :locked_at => @backend.db_time_now)
-    end
+  # context "unlock" do
+  #   before do
+  #     @job = create_job(:locked_by => 'worker', :locked_at => @backend.db_time_now)
+  #   end
 
-    it "should clear locks" do
-      @job.unlock
-      @job.locked_by.should be_nil
-      @job.locked_at.should be_nil
-    end
-  end
+  #   it "should clear locks" do
+  #     @job.unlock
+  #     @job.locked_by.should be_nil
+  #     @job.locked_at.should be_nil
+  #   end
+  # end
 
-  context "large handler" do
-    before do
-      text = "Lorem ipsum dolor sit amet. " * 1000
-      @job = @backend.enqueue Delayed::PerformableMethod.new(text, :length, {})
-    end
+  # context "large handler" do
+  #   before do
+  #     text = "Lorem ipsum dolor sit amet. " * 1000
+  #     @job = @backend.enqueue Delayed::PerformableMethod.new(text, :length, {})
+  #   end
 
-    it "should have an id" do
-      @job.id.should_not be_nil
-    end
-  end
+  #   it "should have an id" do
+  #     @job.id.should_not be_nil
+  #   end
+  # end
 
-  describe "yaml serialization" do
-    it "should reload changed attributes" do
-      job = @backend.enqueue SimpleJob.new
-      yaml = job.to_yaml
-      job.priority = 99
-      job.save
-      YAML.load(yaml).priority.should == 99
-    end
+  # describe "yaml serialization" do
+  #   it "should reload changed attributes" do
+  #     job = @backend.enqueue SimpleJob.new
+  #     yaml = job.to_yaml
+  #     job.priority = 99
+  #     job.save
+  #     YAML.load(yaml).priority.should == 99
+  #   end
 
-    it "should ignore destroyed records" do
-      job = @backend.enqueue SimpleJob.new
-      yaml = job.to_yaml
-      job.destroy
-      lambda { YAML.load(yaml).should be_nil }.should_not raise_error
-    end
-  end
+  #   it "should ignore destroyed records" do
+  #     job = @backend.enqueue SimpleJob.new
+  #     yaml = job.to_yaml
+  #     job.destroy
+  #     lambda { YAML.load(yaml).should be_nil }.should_not raise_error
+  #   end
+  # end
 
 end

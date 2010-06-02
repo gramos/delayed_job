@@ -47,10 +47,9 @@ module Delayed
           Time.now.utc
         end
 
-        def ready_to_run(worker_name, max_run_time)
-
+        def self.ready_to_run(worker_name, max_run_time)
           r = criteria.where({ :run_at => { "$lte" => db_time_now }, :locked_at => nil,
-                           :failed_at => nil})
+                           :failed_at => nil}).all.to_a +
 
           criteria.where({ :run_at => { "$lte" => db_time_now },
                            :locked_at => { "$lte" => db_time_now - max_run_time },
@@ -62,22 +61,7 @@ module Delayed
         end
 
         def self.find_available(worker_name, limit = 5, max_run_time = Worker.max_run_time)
-          right_now = db_time_now
-
-          conditions = {
-            :run_at.lte => right_now,
-            :limit => -limit, # In mongo, positive limits are 'soft' and negative are 'hard'
-            :failed_at => nil }
-
-          #results = criteria.where(conditions.merge(:locked_by => worker_name))
-          results = criteria
-
-          results.where(:priority.gte =>  Worker.min_priority.to_i) if Worker.min_priority
-          results.where(:priority.lte =>  Worker.max_priority.to_i) if Worker.max_priority
-
-          results.in( :locked_at => [nil, make_date(right_now - max_run_time)] ) if results.size < limit
-
-          results.order_by([[:priority, :asc], [:run_at, :asc]]).all.to_a
+          ready_to_run(worker_name, max_run_time)
         end
 
         # When a worker is exiting, make sure we don't have any locked jobs.
