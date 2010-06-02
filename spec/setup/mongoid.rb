@@ -10,6 +10,8 @@ unless defined?(Story)
   class Story
     include ::Mongoid::Document
 
+    field :text, :type => String
+
     def tell; text; end
     def whatever(n, _); tell*n; end
     def self.count; end

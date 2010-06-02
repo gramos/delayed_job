@@ -168,21 +168,21 @@ shared_examples_for 'a backend' do
     end
   end
 
-  # context "#name" do
-  #   it "should be the class name of the job that was enqueued" do
-  #     @backend.create(:payload_object => ErrorJob.new ).name.should == 'ErrorJob'
-  #   end
+  context "#name" do
+    it "should be the class name of the job that was enqueued" do
+      @backend.create(:payload_object => ErrorJob.new ).name.should == 'ErrorJob'
+    end
 
-  #   it "should be the method that will be called if its a performable method object" do
-  #     job = @backend.new(:payload_object => NamedJob.new)
-  #     job.name.should == 'named_job'
-  #   end
+    it "should be the method that will be called if its a performable method object" do
+      job = @backend.new(:payload_object => NamedJob.new)
+      job.name.should == 'named_job'
+    end
 
-  #   it "should be the instance method that will be called if its a performable method object" do
-  #     @job = Story.create(:text => "...").delay.save
-  #     @job.name.should == 'Story#save'
-  #   end
-  # end
+    it "should be the instance method that will be called if its a performable method object" do
+      @job = Story.create(:text => "...").delay.save
+      @job.name.should == 'Story#save'
+   end
+  end
 
   # context "worker prioritization" do
   #   before(:each) do
